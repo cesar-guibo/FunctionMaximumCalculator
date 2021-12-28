@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang='en-US'>
+    <head>
+      <title>Min-max value of a two dimensional function</title>
+      <meta name="description" content="Finds the maximum or the minimum value of a two dimensional real valued function utilizing evolutionary algorithms">
+    </head>
+
+  <body>
+    <h1>Min-max value calculator</h1>
+    <form id="parameters" name="parameters">
+        <label for="function">f(x, y):</label>
+        <input type="text" id="function" placeholder="-x^2 -y^2 + 1"/>
+        <label for="algorithm">Algorithm</label>
+        <select name="Algorithm" id="algorithm">
+          <option value="ELITISM">Elitism</option>
+          <option value="ROULETTE">Roulette</option>
+          <option value="TOURNAMENT">Tournament</option>
+        </select>
+          <label for="generations">Generations:</label>
+          <input type="number" id="generations"/>
+          <label for="population-size">Population size:</label>
+          <input type="number" id="population-size"/>
+          <label for="mutation-ratio">Mutation ratio:</label>
+          <input type="number" id="mutation-ratio"/>
+        <input type="submit" value="Calculate"/>
+    </form>
+    <div class="graph" id="graph">
+    </div>
+  </body>
+  <script src="./script.js"></script>
+</html>
