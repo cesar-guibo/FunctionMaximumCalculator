@@ -64,30 +64,14 @@ const reproduce = (x, y, fitness, selectionFn, mutationRatio) => {
 const generateEvolver = (fitnessFn, selectionFn, mutationRatio) => {
     const FitnessFn = (arr) => arr.map(([xi, yi]) => fitnessFn(xi, yi));
     const evolve = (generations, [X, Y, fitness]) => {
-        return Array.from({length: generations}).map((_) => {
-            console.log(this.X);
-            console.log(this.Y);
-            const fitness = FitnessFn(zip(this.X, this.Y));
-            [this.X, this.Y] = reproduce(this.X, this.Y, fitness, mutationRatio);
-            return fitness;
-        }, {X: X, Y: Y});
+		let fitnessHistory = Array.from({length: generations});
+		for (let i = 0; i < generations; i++) {
+			const fitness = FitnessFn(zip(X, Y));
+			[X, Y] = reproduce(X, Y, fitness, selectionFn, mutationRatio);
+            fitnessHistory[i] = fitness;
+		}
+        return [X, Y, fitnessHistory];
     };
-    /*const evolve = (generations, [X, Y, fitness]) => {
-        return Array.from({length: generations}).reduce((acc, _) => {
-            const [X, Y, fitnessHistory] = acc;
-            const fitness = tail(fitnessHistory);
-            const [newX, newY] = reproduce(X, Y, fitness, selectionFn, mutationRatio);
-            const newFitness = FitnessFn(zip(newX, newY));
-            return [newX, newY, [...fitnessHistory, newFitness]];
-        }, [X, Y, [fitness]])
-    }*/
-    /*const evolve = (generationsLeft, [X, Y, fitness]) => {
-        for (let i = 0; i < generationsLeft; i++) {
-            [X, Y] = reproduce(X, Y, fitness, selectionFn, mutationRatio);
-            fitness = FitnessFn(zip(X, Y));
-        }
-        return [X, Y, fitness];
-    }*/
     return (X, Y, generations) => evolve(generations, [X, Y, FitnessFn(zip(X, Y))]);
 };
 
@@ -95,7 +79,61 @@ const selectionFnsMap = {
     'ELITISM': elitistSelection,
     'ROULETTE': roulletteSelection,
     'TOURNAMENT': tournamentSelection
+};
+
+const linspace = (start, end, numPoints) => {
+    var arr = [];
+    const step = (stopValue - startValue) / (numPoints - 1);
+    for (var i = 0; i < numPoints; i++) {
+        arr.push(startValue + (step * i));
+    }
+    return arr;
 }
+
+const polyval = (fitnessFn) => {
+	let minZ = 0;
+	let maxZ = 0;
+
+	var _z = [];
+	for (var y = -MAX; y < MAX+1; y++) {
+		var _zrow = [];
+		for (var x = -MAX; x < MAX+1; x++) {
+			_zrow.push(fitnessFn(x, y));
+			if (_zrow[x] > maxZ) maxZ = _zrow[x];
+			if (_zrow[x] < minZ) minZ = _zrow[x];
+		}
+		_z.push(_zrow);
+	}
+
+	return {z : _z, type: 'surface'};
+}
+
+const plotEverything = (bestPoint, fitnessFn) => {
+    const data = polyval(fitnessFn);
+    const div = "graph";
+    const layout = {
+        autosize: true,
+    }
+    Plotly.purge(div);
+
+    Plotly.plot(div,
+        [
+            data,
+            {
+                ...bestPoint,
+                mode: 'markers',
+		        marker: {
+			        size: 5,
+			        line: {
+				        color: 'rgba(217, 217, 217, 0.14)',
+				        width: 0.5
+			        },
+			        opacity: 0.8
+		        },
+		        type: 'scatter3d'
+            }
+        ], layout);
+};
 
 const main = () => {
     const parametersForm = document.forms.parameters;
@@ -113,17 +151,23 @@ const main = () => {
             const fn = parameters.function.trim();
             const paddedFn = fn[0] === '-' ? ['0', ...fn].join('') : fn;
             return eval(paddedFn.replaceAll('^', '**'));
-        }
+        };
         const evolve = generateEvolver(fitnessFn, selectionFn, parameters.mutationRatio);
         const X = Array.from({length: parameters.populationSize}).map((_) => Math.max(Math.random() * MAX));
         const Y = X.map((_) => Math.max(Math.random() * MAX));
-        const fitnessHistory = evolve(X, Y, parameters.generations);
-        console.log(fitnessHistory);
+        const [finalX, finalY, fitnessHistory] = evolve(X, Y, parameters.generations);
+        const finalFitness = tail(fitnessHistory);
+        const bestIndex = argmax(finalFitness);
+        const bestPoint = {
+            X: [finalX[bestIndex]],
+            Y: [finalY[bestIndex]],
+            Z: [finalFitness[bestIndex]],
+        };
+		console.log(bestPoint.Z)
+        //console.log(fitnessHistory);
         const resultFitness = tail(fitnessHistory);
         const iMax = argmax(resultFitness);
-        /*console.log(`x: ${resultX[iMax]}`)
-        console.log(`y: ${resultY[iMax]}`)
-        console.log(`resultFitness: ${resultFitness[iMax]}`)*/
+        plotEverything(bestPoint, fitnessFn);
     })
 }
 
