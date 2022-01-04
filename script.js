@@ -63,16 +63,16 @@ const reproduce = (x, y, fitness, selectionFn, mutationRatio) => {
 
 const generateEvolver = (fitnessFn, selectionFn, mutationRatio) => {
     const FitnessFn = (arr) => arr.map(([xi, yi]) => fitnessFn(xi, yi));
-    const evolve = (generations, [X, Y, fitness]) => {
+    const evolve = (generations, [X, Y]) => {
 		let fitnessHistory = Array.from({length: generations});
-		for (let i = 0; i < generations; i++) {
-			const fitness = FitnessFn(zip(X, Y));
-			[X, Y] = reproduce(X, Y, fitness, selectionFn, mutationRatio);
-            fitnessHistory[i] = fitness;
+		for (let i = 0; i < generations - 1; i++) {
+			fitnessHistory[i] = FitnessFn(zip(X, Y));
+			[X, Y] = reproduce(X, Y, fitnessHistory[i], selectionFn, mutationRatio);
 		}
+        fitnessHistory[generations - 1] = FitnessFn(zip(X, Y));
         return [X, Y, fitnessHistory];
     };
-    return (X, Y, generations) => evolve(generations, [X, Y, FitnessFn(zip(X, Y))]);
+    return (X, Y, generations) => evolve(generations, [X, Y]);
 };
 
 const selectionFnsMap = {
@@ -95,9 +95,9 @@ const polyval = (fitnessFn) => {
 	let maxZ = 0;
 
 	var _z = [];
-	for (var y = -MAX; y < MAX+1; y++) {
+	for (var y = 0; y < MAX+1; y++) {
 		var _zrow = [];
-		for (var x = -MAX; x < MAX+1; x++) {
+		for (var x = 0; x < MAX+1; x++) {
 			_zrow.push(fitnessFn(x, y));
 			if (_zrow[x] > maxZ) maxZ = _zrow[x];
 			if (_zrow[x] < minZ) minZ = _zrow[x];
@@ -115,7 +115,19 @@ const plotEverything = (bestPoint, fitnessFn) => {
         autosize: true,
     }
     Plotly.purge(div);
-
+    console.log([data, {
+        ...bestPoint,
+        mode: 'markers',
+        marker: {
+            size: 5,
+            line: {
+				color: 'rgba(217, 217, 217, 0.14)',
+				width: 0.5
+            },
+            opacity: 0.8
+        },
+		type: 'scatter3d'
+    }])
     Plotly.plot(div,
         [
             data,
@@ -125,7 +137,7 @@ const plotEverything = (bestPoint, fitnessFn) => {
 		        marker: {
 			        size: 5,
 			        line: {
-				        color: 'rgba(217, 217, 217, 0.14)',
+				        color: 'rgba(241, 193, 0, 1)',
 				        width: 0.5
 			        },
 			        opacity: 0.8
@@ -156,18 +168,21 @@ const main = () => {
         const X = Array.from({length: parameters.populationSize}).map((_) => Math.max(Math.random() * MAX));
         const Y = X.map((_) => Math.max(Math.random() * MAX));
         const [finalX, finalY, fitnessHistory] = evolve(X, Y, parameters.generations);
+        console.log([finalX, finalY, fitnessHistory])
+        console.log(zip(finalX, finalY).map(([x, y]) => fitnessFn(x, y)));
         const finalFitness = tail(fitnessHistory);
         const bestIndex = argmax(finalFitness);
         const bestPoint = {
-            X: [finalX[bestIndex]],
-            Y: [finalY[bestIndex]],
-            Z: [finalFitness[bestIndex]],
+            x: [finalX[bestIndex]],
+            y: [finalY[bestIndex]],
+            z: [finalFitness[bestIndex]],
         };
 		console.log(bestPoint.Z)
         //console.log(fitnessHistory);
         const resultFitness = tail(fitnessHistory);
         const iMax = argmax(resultFitness);
         plotEverything(bestPoint, fitnessFn);
+        document.getElementById('result').innerHTML = `Result: (${bestPoint.x}, ${bestPoint.y},${bestPoint.z})`;
     })
 }
 
