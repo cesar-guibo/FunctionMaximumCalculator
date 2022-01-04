@@ -1,30 +1,129 @@
 <!doctype html>
 <html lang='en-US'>
-    <head>
-      <title>Min-max value of a two dimensional function</title>
-      <meta name="description" content="Finds the maximum or the minimum value of a two dimensional real valued function utilizing evolutionary algorithms">
-    </head>
+  <head>
+    <title>Min-max value of a two dimensional function</title>
+    <meta name="description" content="Finds the maximum or the minimum value of a two dimensional real valued function utilizing evolutionary algorithms">
+	  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+      html {
+        background-color: #000000;
+        margin: 0 auto;
+        padding: 0 0;
+        color: #f8f8f2;
+        min-width: 100vw;
+        min-height: 100vh;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      .content {
+        margin: 0 auto;
+        padding: 40px 50px;
+        border: 0;
+        border-radius: 4px;
+        background-color: #282a36;
+        width: 80vw;
+        min-height: 100vh;
+        box-sizing: border-box;
+        max-width: 1000px;
+      }
+      h1 {
+        background-color: #ff79c6;
+        padding: 20px 0;
+        margin: 0;
+        text-align: center;
+      }
+      .graph {
+        background-color: #f8f8f2;
+      }
+      .input-block {
+        margin: 15px auto;
+        display: flex;
+        width: 100%;
+      }
+      label {
+        padding: 7px;
+        background-color: #ff79c6;
+      }
+      input, select {
+        border: 1px solid #ff79c6;
+        background-color: #44475a;
+        border-radius: 4px;
+        color: #f8f8f2;
+      }
+
+      button,
+      input[type="submit"] {
+        margin: 10px 0;
+        padding: 15px 20px;
+        border: 0;
+        border-radius: 4px;
+        font-family: "nexaBold", sans-serif;
+        font-size: 15px;
+        text-transform: uppercase;
+        transition: filter 0.6s;
+        background-color: #ff79c6;
+        width: 100%;
+        color: #f8f8f2;
+      }
+
+      button:hover,
+      input[type="submit"]:hover {
+        filter: brightness(0.8);
+        transition: filter 0.6s;
+      }
+
+      form img {
+        display: block;
+        max-height: 500px;
+        max-width: 300px;
+        object-fit: contain;
+        margin: 5px auto;
+      }
+
+      span {
+        background-color: white;
+        width: 100%;
+        color: #000000;
+      }
+    </style>
+	</head>
 
   <body>
     <h1>Min-max value calculator</h1>
-    <form id="parameters" name="parameters">
-        <label for="function">f(x, y):</label>
-        <input type="text" id="function" placeholder="-x^2 -y^2 + 1"/>
-        <label for="algorithm">Algorithm</label>
-        <select name="Algorithm" id="algorithm">
-          <option value="ELITISM">Elitism</option>
-          <option value="ROULETTE">Roulette</option>
-          <option value="TOURNAMENT">Tournament</option>
-        </select>
-          <label for="generations">Generations:</label>
-          <input type="number" id="generations"/>
-          <label for="population-size">Population size:</label>
-          <input type="number" id="population-size"/>
-          <label for="mutation-ratio">Mutation ratio:</label>
-          <input type="number" id="mutation-ratio"/>
-        <input type="submit" value="Calculate"/>
-    </form>
-    <div class="graph" id="graph">
+    <div class="content">
+      <form id="parameters" name="parameters">
+          <div class="input-block">
+            <label for="function">f(x, y):</label>
+            <input type="text" id="function" placeholder="-x^2 -y^2 + 1"/>
+          </div>
+          <div class="input-block">
+            <label for="algorithm">Algorithm</label>
+            <select name="Algorithm" id="algorithm">
+              <option value="ELITISM">Elitism</option>
+              <option value="ROULETTE">Roulette</option>
+              <option value="TOURNAMENT">Tournament</option>
+            </select>
+          </div>
+          <div class="input-block">
+            <label for="generations">Generations:</label>
+            <input type="number" id="generations"/>
+          </div>
+          <div class="input-block">
+            <label for="population-size">Population size:</label>
+            <input type="number" id="population-size"/>
+          </div>
+          <div class="input-block">
+            <label for="mutation-ratio">Mutation ratio:</label>
+            <input type="number" id="mutation-ratio"/>
+          </div>
+          <input type="submit" value="Calculate"/>
+      </form>
+      <div>
+      <div class="graph" id="graph">
+      </div>
+        <span id="result">
+        </span>
+      </div>
     </div>
   </body>
   <script src="./script.js"></script>
