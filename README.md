@@ -34,15 +34,6 @@ Realizamos o rearranjo da população por meio da substituição de gerações.
 
 O projeto foi desenvolvido na linguagem de programação JavaScript, com ajuda da biblioteca Plotly, utilizada para o plot dos gráficos. O site se encontra disponível no link: 
 
-## Qual algoritmo de seleção utilizar?
-
-### Elitismo
-Por ser um algoritmo mais guloso que os demais, podemos utilizá-lo quando estamos diante de uma função com poucos máximos locais calculados em seu domínio. Isso ocorre pois como esse método é de natureza gulosa, ele irá convergir mais rapidamente para algum máximo, mas não necessariamente esse ponto será o máximo global da função.
-
-### Roleta ou Torneio
-Por serem algoritmos de natureza estocástica, podemos utilizá-los quando estamos diante de uma função com muitos máximos locais calculados em seu domínio. Isso ocorre, porque esses métodos não necessariamente irão convergir para o máximo mais "perto", tendo uma maior chance de convergir para um máximo global. 
-
-
 ## Autores
 - César Henrique de Araújo Guibo - 11219705
 - Pedro Henrique Borges Monici   - 10816732
