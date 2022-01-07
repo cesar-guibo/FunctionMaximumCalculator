@@ -27,6 +27,8 @@ $$[max\{x - mutation\_ratio, MIN\}, min\{x + mutation\_ratio, MAX\}]$$
 
 onde $MIN$ e $MAX$ são constantes arbitrárias que determinam a região do domínio da função que está sob consideração na procura do máximo.
 
+É válido ressaltar que existe a opção também de ocorrer uma Mutação Variada, isto é, com um MutationRatio que varia ao longo das gerações. Tal opção é importante para tratar funções com muitos máximos locais e, assim, conseguir encontrar com sucesso o máximo global.
+
 ### Rearranjo da população
 Realizamos o rearranjo da população por meio da substituição de gerações. 
 
