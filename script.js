@@ -14,6 +14,8 @@ const partialSum = (arr) => arr.reduce((acc, elem) => [...acc, acc.length > 0 ? 
 
 const max = (arr) => arr.reduce((acc, elem) => acc < elem ? elem : acc, Number.MIN_SAFE_INTEGER);
 
+const mean = (arr) => arr.reduce((acc, elem) => acc + elem, 0) / arr.length;
+
 const min = (arr) => arr.reduce((acc, elem) => acc < elem ? acc : elem, Number.MAX_SAFE_INTEGER);
 
 // Gera um inteiro aleatório
@@ -54,44 +56,67 @@ const mutate = (curr, mutationRatio) => {
 // Realiza o crossover com a média entre os elementos 'x' e 'y'
 const crossover = (x, y) => (x + y) / 2.0;
 
-// Realiza uma seleção elitista
-const elitistSelection = (x, fitness) => [x, Array.from({length: x.length}).fill(x[argmax(fitness)])];
-
 // Roda a roleta e escolhe um elemento de tal forma que as probabilidades dos valores 
 // são maiores quanto maiores seus fitness (SoftMax)
-const rollRoulette = (fitness) => {
+const rollRoulette = (fitness, n_samples) => {
     const exponentials = fitness.map((elem) => Math.exp(elem));
     const exponentialsSum = sum(exponentials);
     const probabilites = exponentials.map((elem) => elem / exponentialsSum);
     const indices = Array.from(exponentials.keys());
-    return Array.from({length: indices.length}, (_) => sampleFromDistribution(indices, probabilites));
+    return Array.from({length: n_samples}, (_) => sampleFromDistribution(indices, probabilites));
+};
+
+
+// Realiza uma seleção elitista
+const elitistSelection = (x, fitness, n_children) => {
+    const bestIndex = argmax(fitness);
+    const suitors = x.filter((_, idx) => idx !== bestIndex);
+    const repeatedBest = Array.from({length: x.length - 1}).fill(x[bestIndex]);
+    return [suitors, repeatedBest];
 };
 
 // Realiza uma seleção pelo método da roleta
-const roulletteSelection = (x, fitness) => {
-    const father = rollRoulette(fitness).map((i) => x[i]);
-    const mother = rollRoulette(fitness).map((i) => x[i]);
-    return [father, mother];
+const roulletteSelection = (x, fitness, n_children) => {
+    return [
+        rollRoulette(fitness, n_children).map((i) => x[i]),
+        rollRoulette(fitness, n_children).map((i) => x[i])
+    ];
 };
 
-// Realiza uma seleção pelo método de torneio
-const tournamentSelection = (x, fitness) => {
-    const WinnersIndices = x.map((_) => {
+const tournamentWinners = (x, fitness, n_children) => {
+    return Array.from({length: n_children}, (_) => {
         const winners = Array.from({length: TOURNAMENTS_SIZE}).map(_ => Math.floor(Math.random() * x.length));
         return winners.reduce((acc, elem) => fitness[acc] < fitness[elem] ? elem : acc, winners[0]);
     });
-    const winners = WinnersIndices.map((elem) => x[elem]);
-    return [winners, winners];
+}
+
+// Realiza uma seleção pelo método de torneio
+const tournamentSelection = (x, fitness, n_children) => {
+    return  [
+        tournamentWinners(x, fitness, n_children).map((elem) => x[elem]),
+        tournamentWinners(x, fitness, n_children).map((elem) => x[elem])
+    ];
 };
 
 // Realiza a reprodução sexuada
 const reproduce = (x, y, fitness, selectionFn, mutationRatio) => {
     const partialMutate = (x) => mutate(x, mutationRatio);
-    const [X1, X2] = selectionFn(x, fitness);
-    const [Y1, Y2] = selectionFn(y, fitness);
+    const [X1, X2] = selectionFn(x, fitness, fitness.length);
+    const [Y1, Y2] = selectionFn(y, fitness, fitness.length);
     const newX = zip(X1, X2).map(([x1, x2]) => partialMutate(crossover(x1, x2)));
     const newY = zip(Y1, Y2).map(([y1, y2]) => partialMutate(crossover(y1, y2)));
     return [newX, newY];
+};
+
+// Realiza a reproducao perpetuando o melhor individuo
+const reproduceWithPerpetuatedBest = (x, y, fitness, selectionFn, mutationRatio) => {
+    const partialMutate = (x) => mutate(x, mutationRatio);
+    const bestIndex = argmax(fitness);
+    const [x1, x2] = selectionFn(x, fitness, fitness.length - 1);
+    const [y1, y2] = selectionFn(y, fitness, fitness.length - 1);
+    const newX = zip(x1, x2).map(([x1, x2]) => partialMutate(crossover(x1, x2)));
+    const newY = zip(y1, y2).map(([y1, y2]) => partialMutate(crossover(y1, y2)));
+    return [[x[bestIndex], ...newX], [y[bestIndex], ...newY]];
 };
 
 // Gera a função que simula a evolução da população
@@ -101,7 +126,31 @@ const generateEvolver = (fitnessFn, selectionFn, mutationRatio) => {
 		let fitnessHistory = Array.from({length: generations});
 		for (let i = 0; i < generations - 1; i++) {
 			fitnessHistory[i] = FitnessFn(zip(X, Y));
-			[X, Y] = reproduce(X, Y, fitnessHistory[i], selectionFn, mutationRatio);
+			[X, Y] = reproduceWithPerpetuatedBest(X, Y, fitnessHistory[i], selectionFn, mutationRatio);
+		}
+        fitnessHistory[generations - 1] = FitnessFn(zip(X, Y));
+        return [X, Y, fitnessHistory];
+    };
+    return (X, Y, generations) => evolve(generations, [X, Y]);
+};
+
+// Gera a funcao que simula a evolucao da populacao utilizando mutacao variada
+const generateEvolverWithVariableMutationRatio = (fitnessFn, selectionFn, mutationRatio) => {
+    const FitnessFn = (arr) => arr.map(([xi, yi]) => fitnessFn(xi, yi));
+    const initialMutRatio = mutationRatio;
+    const evolve = (generations, [X, Y]) => {
+		let fitnessHistory = Array.from({length: generations});
+		for (let i = 0; i < generations - 1; i++) {
+			fitnessHistory[i] = FitnessFn(zip(X, Y));
+            if (i % 10 === 0) {
+                if (mutationRatio <= 0.01) {
+                    mutationRatio = initialMutRatio;
+                } else {
+                    mutationRatio /= 2;
+                }
+                console.log(mutationRatio);
+            }
+			[X, Y] = reproduceWithPerpetuatedBest(X, Y, fitnessHistory[i], selectionFn, mutationRatio);
 		}
         fitnessHistory[generations - 1] = FitnessFn(zip(X, Y));
         return [X, Y, fitnessHistory];
@@ -152,7 +201,8 @@ const main = () => {
             function: parametersForm.elements.function.value,
             generations: parseInt(parametersForm.elements.generations.value),
             mutationRatio: parseInt(parametersForm.elements['mutation-ratio'].value),
-            populationSize: parseInt(parametersForm.elements['population-size'].value)
+            populationSize: parseInt(parametersForm.elements['population-size'].value),
+            variableMutation: parametersForm.elements['variable-mutation'].checked
         };
         const selectionFn = selectionFnsMap[parameters.algorithm];
         const fitnessFn = (x, y) => {
@@ -162,7 +212,9 @@ const main = () => {
         };
 
 		// Realiza a evolução
-        const evolve = generateEvolver(fitnessFn, selectionFn, parameters.mutationRatio);
+        const evolve = parameters.variableMutation ?
+            generateEvolverWithVariableMutationRatio(fitnessFn, selectionFn, parameters.mutationRatio) :
+            generateEvolver(fitnessFn, selectionFn, parameters.mutationRatio);
         const X = Array.from({length: parameters.populationSize}).map((_) => Math.max(Math.random() * MAX));
         const Y = X.map((_) => Math.max(Math.random() * MAX));
         const [finalX, finalY, fitnessHistory] = evolve(X, Y, parameters.generations);
@@ -183,21 +235,30 @@ const main = () => {
 		document.getElementById('result').innerHTML = `Result: (${bestPoint.x}, ${bestPoint.y},${bestPoint.z})`;
 
 		// Plot History
-        const cX = Array.from({length: X.length}, (_, idx) => idx);
-        const cY = fitnessHistory.map(max);
+        const cX = Array.from({length: parameters.generations}, (_, idx) => idx);
+        const maxPlot = {
+            x: cX,
+            y: fitnessHistory.map(max),
+            mode: 'lines+markers',
+            name: "Max fitness history",
+            font: {
+                size: 16
+            }
+        };
+        const meanPlot ={
+            x: cX,
+            y: fitnessHistory.map(mean),
+            mode: 'lines+markers',
+            name: "Mean fitness history",
+            font: {
+                size: 16
+            }
+        }
         Plotly.purge('history');
         Plotly.plot('history',
-            [{
-                x: cX,
-                y: cY,
-                mode: 'lines+markers',
-                name: "fitnessHistory",
-                font: {
-                    size: 16
-                }
-            }],
+            [maxPlot, meanPlot],
             {
-                yaxis: {range: [min(cY), max(cY)]}
+                yaxis: {range: [Math.min(min(maxPlot.y), min(meanPlot.y)), Math.max(max(maxPlot.y), max(meanPlot.y))]}
             }
         );
     })
