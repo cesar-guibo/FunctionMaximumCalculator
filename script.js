@@ -56,7 +56,7 @@ const mutate = (curr, mutationRatio) => {
 // Realiza o crossover com a média entre os elementos 'x' e 'y'
 const crossover = (x, y) => (x + y) / 2.0;
 
-// Roda a roleta e escolhe um elemento de tal forma que as probabilidades dos valores 
+// Roda a roleta e escolhe um elemento de tal forma que as probabilidades dos valores
 // são maiores quanto maiores seus fitness (SoftMax)
 const rollRoulette = (fitness, n_samples) => {
     const exponentials = fitness.map((elem) => Math.exp(elem));
@@ -148,7 +148,6 @@ const generateEvolverWithVariableMutationRatio = (fitnessFn, selectionFn, mutati
                 } else {
                     mutationRatio /= 2;
                 }
-                console.log(mutationRatio);
             }
 			[X, Y] = reproduceWithPerpetuatedBest(X, Y, fitnessHistory[i], selectionFn, mutationRatio);
 		}
@@ -218,7 +217,7 @@ const main = () => {
         const X = Array.from({length: parameters.populationSize}).map((_) => Math.max(Math.random() * MAX));
         const Y = X.map((_) => Math.max(Math.random() * MAX));
         const [finalX, finalY, fitnessHistory] = evolve(X, Y, parameters.generations);
-        
+
 		// Melhor ponto (indivíduo) da população final
 		const finalFitness = tail(fitnessHistory);
         const bestIndex = argmax(finalFitness);
@@ -230,7 +229,7 @@ const main = () => {
 
 		// Plot Graphic
         plotGraphic(bestPoint, fitnessFn);
-		
+
 		// Print result
 		document.getElementById('result').innerHTML = `Result: (${bestPoint.x}, ${bestPoint.y},${bestPoint.z})`;
 
